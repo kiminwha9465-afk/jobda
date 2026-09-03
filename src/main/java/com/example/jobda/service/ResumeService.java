@@ -2,10 +2,12 @@ package com.example.jobda.service;
 
 import com.example.jobda.domain.entity.Resume;
 import com.example.jobda.domain.entity.Tag;
+import com.example.jobda.domain.entity.User;
 import com.example.jobda.domain.enums.ResumeType;
 import com.example.jobda.dto.request.ResumeRequest;
 import com.example.jobda.dto.response.ResumeResponse;
 import com.example.jobda.repository.ResumeRepository;
+import com.example.jobda.util.AuthUtil;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -22,9 +24,11 @@ public class ResumeService {
     private final ResumeRepository resumeRepository;
     private final TagService tagService;
     private final FileStorageService fileStorageService;
+    private final AuthUtil authUtil;
 
     public List<ResumeResponse> findAll() {
-        return resumeRepository.findAll().stream().map(ResumeResponse::from).toList();
+        User user = authUtil.getCurrentUser();
+        return resumeRepository.findByUser(user).stream().map(ResumeResponse::from).toList();
     }
 
     public ResumeResponse findById(Long id) {
@@ -32,15 +36,18 @@ public class ResumeService {
     }
 
     public List<ResumeResponse> findByType(ResumeType type) {
-        return resumeRepository.findByType(type).stream().map(ResumeResponse::from).toList();
+        User user = authUtil.getCurrentUser();
+        return resumeRepository.findByUserAndType(user, type).stream().map(ResumeResponse::from).toList();
     }
 
     public List<ResumeResponse> findTemplates() {
-        return resumeRepository.findByIsTemplate(true).stream().map(ResumeResponse::from).toList();
+        User user = authUtil.getCurrentUser();
+        return resumeRepository.findByUserAndIsTemplate(user, true).stream().map(ResumeResponse::from).toList();
     }
 
     @Transactional
     public ResumeResponse create(ResumeRequest request) {
+        User user = authUtil.getCurrentUser();
         Resume resume = Resume.builder()
                 .title(request.title())
                 .type(request.type())
@@ -49,6 +56,7 @@ public class ResumeService {
                 .targetPosition(request.targetPosition())
                 .version(request.version() != null ? request.version() : 1)
                 .isTemplate(request.isTemplate())
+                .user(user)
                 .build();
         return ResumeResponse.from(resumeRepository.save(resume));
     }
@@ -100,6 +108,7 @@ public class ResumeService {
                 .targetPosition(original.getTargetPosition())
                 .version(original.getVersion() + 1)
                 .isTemplate(false)
+                .user(original.getUser())
                 .build();
         return ResumeResponse.from(resumeRepository.save(copy));
     }

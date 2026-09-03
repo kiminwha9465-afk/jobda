@@ -3,11 +3,13 @@ package com.example.jobda.service;
 import com.example.jobda.domain.entity.Company;
 import com.example.jobda.domain.entity.JobPosting;
 import com.example.jobda.domain.entity.Tag;
+import com.example.jobda.domain.entity.User;
 import com.example.jobda.domain.enums.ApplicationStatus;
 import com.example.jobda.dto.request.JobPostingRequest;
 import com.example.jobda.dto.response.JobPostingResponse;
 import com.example.jobda.repository.CompanyRepository;
 import com.example.jobda.repository.JobPostingRepository;
+import com.example.jobda.util.AuthUtil;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -24,9 +26,11 @@ public class JobPostingService {
     private final JobPostingRepository jobPostingRepository;
     private final CompanyRepository companyRepository;
     private final TagService tagService;
+    private final AuthUtil authUtil;
 
     public List<JobPostingResponse> findAll() {
-        return jobPostingRepository.findAll().stream().map(JobPostingResponse::from).toList();
+        User user = authUtil.getCurrentUser();
+        return jobPostingRepository.findByUser(user).stream().map(JobPostingResponse::from).toList();
     }
 
     public JobPostingResponse findById(Long id) {
@@ -34,24 +38,29 @@ public class JobPostingService {
     }
 
     public List<JobPostingResponse> findByStatus(ApplicationStatus status) {
-        return jobPostingRepository.findByStatus(status).stream().map(JobPostingResponse::from).toList();
+        User user = authUtil.getCurrentUser();
+        return jobPostingRepository.findByUserAndStatus(user, status).stream().map(JobPostingResponse::from).toList();
     }
 
     public List<JobPostingResponse> findByCompany(Long companyId) {
-        return jobPostingRepository.findByCompanyId(companyId).stream().map(JobPostingResponse::from).toList();
+        User user = authUtil.getCurrentUser();
+        return jobPostingRepository.findByUserAndCompanyId(user, companyId).stream().map(JobPostingResponse::from).toList();
     }
 
     public List<JobPostingResponse> search(String keyword) {
-        return jobPostingRepository.findByKeyword(keyword).stream().map(JobPostingResponse::from).toList();
+        User user = authUtil.getCurrentUser();
+        return jobPostingRepository.findByUserAndKeyword(user, keyword).stream().map(JobPostingResponse::from).toList();
     }
 
     public List<JobPostingResponse> findUpcomingDeadlines() {
-        return jobPostingRepository.findUpcomingDeadlines(LocalDate.now()).stream()
+        User user = authUtil.getCurrentUser();
+        return jobPostingRepository.findUpcomingDeadlinesByUser(user, LocalDate.now()).stream()
                 .map(JobPostingResponse::from).toList();
     }
 
     @Transactional
     public JobPostingResponse create(JobPostingRequest request) {
+        User user = authUtil.getCurrentUser();
         Company company = resolveCompany(request.companyId());
         JobPosting jobPosting = JobPosting.builder()
                 .title(request.title())
@@ -62,6 +71,7 @@ public class JobPostingService {
                 .jobType(request.jobType())
                 .department(request.department())
                 .memo(request.memo())
+                .user(user)
                 .build();
         return JobPostingResponse.from(jobPostingRepository.save(jobPosting));
     }

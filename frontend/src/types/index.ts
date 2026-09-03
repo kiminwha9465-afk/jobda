@@ -52,6 +52,27 @@ export interface SearchResponse {
   coverLetters: CoverLetterResponse[]; resumes: ResumeResponse[];
 }
 
+export interface SaraminJob {
+  saraminId: string;
+  title: string;
+  companyName: string;
+  location: string | null;
+  jobType: string | null;
+  industry: string | null;
+  experienceLevel: string | null;
+  url: string;
+  expirationDate: string | null;
+  alreadySaved: boolean;
+}
+
+export interface SaraminKeyword {
+  id: number;
+  keyword: string;
+  active: boolean;
+  lastCollectedAt: string | null;
+  createdAt: string;
+}
+
 // Requests
 export interface CompanyRequest { name: string; industry?: string; location?: string; website?: string; size?: string; welfare?: string; memo?: string; }
 export interface JobPostingRequest { title: string; companyId?: number | null; url?: string; deadline?: string | null; status?: ApplicationStatus; jobType?: string; department?: string; memo?: string; }
@@ -60,3 +81,33 @@ export interface CoverLetterRequest { title: string; companyId?: number | null; 
 export interface ResumeRequest { title: string; type: ResumeType; content?: string; targetCompany?: string; targetPosition?: string; version?: number; isTemplate?: boolean; }
 export interface ScheduleRequest { title: string; type: ScheduleType; scheduledAt: string; location?: string; memo?: string; jobPostingId?: number | null; }
 export interface TagRequest { name: string; color?: string; }
+export interface SaraminImportRequest {
+  saraminId: string; title: string; companyName: string; url: string;
+  location?: string; jobType?: string; industry?: string; experienceLevel?: string; expirationDate?: string;
+}
+
+export interface AuthUser {
+  email: string;
+  name: string;
+}
+
+export interface LoginRequest { email: string; password: string; }
+export interface RegisterRequest { email: string; password: string; name: string; }
+export interface AuthResponse { token: string; email: string; name: string; }
+
+export interface DartCompany {
+  corpCode: string;
+  corpName: string;
+  corpNameEng: string | null;
+  stockCode: string | null;
+  corpCls: string | null;
+  ceoNm: string | null;
+  address: string | null;
+  website: string | null;
+  phone: string | null;
+  bizrNo: string | null;
+  estDt: string | null;
+  indutyCode: string | null;
+  alreadySaved: boolean;
+}
+

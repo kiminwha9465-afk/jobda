@@ -1,15 +1,17 @@
 import { X } from 'lucide-react';
 import { ReactNode } from 'react';
+import { useNavigate } from 'react-router-dom';
 import type { ApplicationStatus, ScheduleType } from '../types';
 
-export function Modal({ isOpen, onClose, title, children }: {
-  isOpen: boolean; onClose: () => void; title: string; children: ReactNode;
+export function Modal({ isOpen, onClose, title, children, size = 'md' }: {
+  isOpen: boolean; onClose: () => void; title: string; children: ReactNode; size?: 'md' | 'xl';
 }) {
   if (!isOpen) return null;
+  const maxW = size === 'xl' ? 'max-w-4xl' : 'max-w-2xl';
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/50" onClick={onClose} />
-      <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col">
+      <div className={`relative bg-white rounded-xl shadow-2xl w-full ${maxW} max-h-[90vh] flex flex-col`}>
         <div className="flex items-center justify-between px-6 py-4 border-b shrink-0">
           <h2 className="text-lg font-semibold text-gray-900">{title}</h2>
           <button onClick={onClose} className="p-1 rounded-lg hover:bg-gray-100">
@@ -59,9 +61,9 @@ export function Empty({ message }: { message: string }) {
 
 export function PageHeader({ title, action }: { title: string; action?: ReactNode }) {
   return (
-    <div className="flex items-center justify-between mb-6">
+    <div className="flex items-center justify-between mb-6 min-h-[40px]">
       <h1 className="text-2xl font-bold text-gray-900">{title}</h1>
-      {action}
+      <div>{action}</div>
     </div>
   );
 }
@@ -83,11 +85,15 @@ export function StatusBadge({ status }: { status: ApplicationStatus }) {
 }
 
 export function TagBadge({ name, color, onRemove }: { name: string; color?: string | null; onRemove?: () => void }) {
+  const navigate = useNavigate();
   return (
-    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium"
-      style={{ backgroundColor: color ? `${color}22` : '#f1f5f9', color: color ?? '#475569' }}>
+    <span
+      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium transition-opacity ${!onRemove ? 'cursor-pointer hover:opacity-70' : ''}`}
+      style={{ backgroundColor: color ? `${color}22` : '#f1f5f9', color: color ?? '#475569' }}
+      onClick={!onRemove ? () => navigate(`/search?q=${encodeURIComponent(name)}`) : undefined}
+    >
       #{name}
-      {onRemove && <button onClick={onRemove} className="ml-0.5 hover:opacity-70"><X className="w-3 h-3" /></button>}
+      {onRemove && <button onClick={e => { e.stopPropagation(); onRemove(); }} className="ml-0.5 hover:opacity-70"><X className="w-3 h-3" /></button>}
     </span>
   );
 }

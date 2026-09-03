@@ -58,9 +58,16 @@ function CalendarView({
   const [year, setYear] = useState(today.getFullYear());
   const [month, setMonth] = useState(today.getMonth());
   const [selected, setSelected] = useState<Date | null>(null);
+  const [typeFilter, setTypeFilter] = useState<ScheduleType | 'ALL'>('ALL');
+  const [hideCompleted, setHideCompleted] = useState(false);
+
+  const filtered = list.filter(s =>
+    (typeFilter === 'ALL' || s.type === typeFilter) &&
+    (!hideCompleted || !s.completed)
+  );
 
   const days = calendarDays(year, month);
-  const selectedSchedules = selected ? schedulesForDay(list, selected) : [];
+  const selectedSchedules = selected ? schedulesForDay(filtered, selected) : [];
 
   function prevMonth() { if (month === 0) { setYear(y => y - 1); setMonth(11); } else setMonth(m => m - 1); }
   function nextMonth() { if (month === 11) { setYear(y => y + 1); setMonth(0); } else setMonth(m => m + 1); }
@@ -73,6 +80,24 @@ function CalendarView({
 
   return (
     <div>
+      {/* Filters */}
+      <div className="flex items-center gap-2 mb-3 flex-wrap">
+        <div className="flex gap-1.5 flex-wrap flex-1">
+          {(['ALL', ...TYPES.map(t => t.value)] as const).map(t => (
+            <button key={t} onClick={() => setTypeFilter(t as typeof typeFilter)}
+              className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${typeFilter === t ? 'bg-blue-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50 shadow-sm border border-gray-200'}`}>
+              {t === 'ALL' ? '전체' : TYPES.find(tp => tp.value === t)?.label ?? t}
+            </button>
+          ))}
+        </div>
+        <button
+          onClick={() => setHideCompleted(v => !v)}
+          className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors shrink-0 ${hideCompleted ? 'bg-slate-700 text-white' : 'bg-white text-gray-600 hover:bg-gray-50 shadow-sm border border-gray-200'}`}
+        >
+          완료 숨기기
+        </button>
+      </div>
+
       {/* Month nav */}
       <div className="bg-white rounded-xl shadow-sm overflow-hidden mb-4">
         <div className="flex items-center justify-between px-5 py-4 border-b">
@@ -95,7 +120,7 @@ function CalendarView({
         <div className="grid grid-cols-7">
           {days.map((day, i) => {
             if (!day) return <div key={`empty-${i}`} className="min-h-[80px] border-r border-b border-gray-100 bg-gray-50/50" />;
-            const dayScheds = schedulesForDay(list, day);
+            const dayScheds = schedulesForDay(filtered, day);
             const isToday = isSameDay(day, today);
             const isSel = selected ? isSameDay(selected, day) : false;
             const isSun = day.getDay() === 0;

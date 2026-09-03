@@ -1,45 +1,28 @@
-HELP.md
-.gradle
+# Build outputs
 build/
-!gradle/wrapper/gradle-wrapper.jar
-!**/src/main/**/build/
-!**/src/test/**/build/
+.gradle/
+*.jar
 
-### STS ###
-.apt_generated
-.classpath
-.factorypath
-.project
-.settings
-.springBeans
-.sts4-cache
-bin/
-!**/src/main/**/bin/
-!**/src/test/**/bin/
+# H2 database files
+data/
 
-### IntelliJ IDEA ###
-.idea
-*.iws
+# Frontend build
+frontend/dist/
+frontend/node_modules/
+
+# Node (root-level playwright setup)
+node_modules/
+package-lock.json
+
+# Sensitive / temp
+cookie.txt
+test_layout.js
+*.log
+
+# IDE
+.idea/
 *.iml
-*.ipr
-out/
-!**/src/main/**/out/
-!**/src/test/**/out/
-
-### NetBeans ###
-/nbproject/private/
-/nbbuild/
-/dist/
-/nbdist/
-/.nb-gradle/
-
-### VS Code ###
 .vscode/
 
-### Frontend ###
-frontend/node_modules/
-frontend/dist/
-frontend/.vite/
-
-### Uploads ###
-uploads/
+# Spring Boot static (bundled frontend)
+src/main/resources/static/

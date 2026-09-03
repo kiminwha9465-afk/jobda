@@ -52,6 +52,10 @@ public class Resume {
     )
     private Set<Tag> tags = new HashSet<>();
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    private User user;
+
     @Column(updatable = false)
     private LocalDateTime createdAt;
 

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Plus, Pencil, Trash2, Copy, ChevronDown, ChevronUp, PlusCircle, X } from 'lucide-react';
+import { Plus, Pencil, Trash2, Copy, ChevronDown, ChevronUp, PlusCircle, X, PenLine, ClipboardPaste, CheckCircle, ExternalLink } from 'lucide-react';
 import { coverLettersApi, companiesApi } from '../api';
 import type { CoverLetterResponse, CoverLetterRequest, CoverLetterItemRequest } from '../types';
 import { Modal, Field, Input, Textarea, Select, Btn, Spinner, Empty, TagBadge, PageHeader } from '../components/ui';
@@ -13,7 +13,27 @@ const fmtDate = (d: string) => new Date(d).toLocaleDateString('ko-KR');
 export default function CoverLetters() {
   const qc = useQueryClient();
   const [showModal, setShowModal] = useState(false);
+  const [showWriting, setShowWriting] = useState(false);
   const [editing, setEditing] = useState<CoverLetterResponse | null>(null);
+
+  // 글쓰기 도구 state
+  const [wtText, setWtText] = useState('');
+  const [wtLimit, setWtLimit] = useState<number | ''>('');
+  const [wtCopied, setWtCopied] = useState(false);
+  const wtCount = wtText.length;
+  const wtLimitNum = typeof wtLimit === 'number' ? wtLimit : null;
+  const wtOver = wtLimitNum !== null && wtCount > wtLimitNum;
+  const wtNear = wtLimitNum !== null && wtCount > wtLimitNum * 0.9;
+  function openSpellChecker() {
+    const form = document.createElement('form');
+    form.method = 'POST'; form.action = 'https://dic.daum.net/grammar_checker.do'; form.target = '_blank';
+    const input = document.createElement('input');
+    input.type = 'hidden'; input.name = 'sentence'; input.value = wtText;
+    form.appendChild(input); document.body.appendChild(form); form.submit(); document.body.removeChild(form);
+  }
+  function handleWtCopy() {
+    navigator.clipboard.writeText(wtText).then(() => { setWtCopied(true); setTimeout(() => setWtCopied(false), 2000); });
+  }
   const [form, setForm] = useState<CoverLetterRequest>(DEF);
   const [expanded, setExpanded] = useState<Set<number>>(new Set());
 
@@ -48,7 +68,12 @@ export default function CoverLetters() {
 
   return (
     <div>
-      <PageHeader title="자소서" action={<Btn onClick={() => open()}><Plus className="w-4 h-4" />자소서 추가</Btn>} />
+      <PageHeader title="자소서" action={
+        <div className="flex gap-2">
+          <Btn variant="secondary" onClick={() => setShowWriting(true)}><PenLine className="w-4 h-4" />글쓰기 도구</Btn>
+          <Btn onClick={() => open()}><Plus className="w-4 h-4" />자소서 추가</Btn>
+        </div>
+      } />
 
       {isLoading ? <Spinner /> : list.length === 0 ? <Empty message="등록된 자소서가 없습니다" /> : (
         <div className="space-y-3">
@@ -146,6 +171,69 @@ export default function CoverLetters() {
             <Btn type="submit" disabled={createM.isPending || updateM.isPending}>저장</Btn>
           </div>
         </form>
+      </Modal>
+      {/* 글쓰기 도구 모달 */}
+      <Modal isOpen={showWriting} onClose={() => setShowWriting(false)} title="글쓰기 도구" size="xl">
+        <div className="flex flex-col gap-4">
+          <div className="flex items-center justify-between">
+            <p className="text-sm font-semibold text-gray-700">텍스트 입력</p>
+            <div className="flex items-center gap-2">
+              <button onClick={() => navigator.clipboard.readText().then(t => setWtText(p => p + t))} title="클립보드에서 붙여넣기"
+                className="p-1.5 rounded hover:bg-gray-100 text-gray-400 hover:text-gray-600">
+                <ClipboardPaste className="w-4 h-4" />
+              </button>
+              <button onClick={() => setWtText('')} title="초기화"
+                className="p-1.5 rounded hover:bg-gray-100 text-gray-400 hover:text-red-500">
+                <Trash2 className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+
+          <textarea
+            value={wtText}
+            onChange={e => setWtText(e.target.value)}
+            placeholder="텍스트를 입력하세요..."
+            className="w-full border border-gray-200 rounded-lg p-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 leading-relaxed"
+            rows={14}
+          />
+
+          <div className="flex items-center gap-3">
+            <span className={`text-sm font-semibold ${wtOver ? 'text-red-500' : wtNear ? 'text-orange-500' : 'text-gray-700'}`}>
+              {wtCount.toLocaleString()}자
+            </span>
+            {wtLimitNum !== null && (
+              <>
+                <span className="text-sm text-gray-400">/ {wtLimitNum.toLocaleString()}자</span>
+                <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
+                  <div className={`h-full rounded-full transition-all ${wtOver ? 'bg-red-500' : wtNear ? 'bg-orange-400' : 'bg-blue-500'}`}
+                    style={{ width: `${Math.min((wtCount / wtLimitNum) * 100, 100)}%` }} />
+                </div>
+                {wtOver && <span className="text-xs text-red-500 shrink-0">{wtCount - wtLimitNum}자 초과</span>}
+              </>
+            )}
+          </div>
+
+          <div className="flex items-center gap-2 border-t pt-3">
+            <label className="text-xs text-gray-500 shrink-0">글자 수 제한</label>
+            <input type="number" min={0} value={wtLimit}
+              onChange={e => setWtLimit(e.target.value ? Number(e.target.value) : '')}
+              placeholder="예: 500"
+              className="w-28 px-2 py-1 border border-gray-200 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            {wtLimit !== '' && <button onClick={() => setWtLimit('')} className="text-xs text-gray-400 hover:text-gray-600">초기화</button>}
+          </div>
+
+          <div className="flex gap-2 border-t pt-3">
+            <Btn onClick={handleWtCopy} variant="secondary" disabled={!wtText.trim()}>
+              {wtCopied ? <CheckCircle className="w-4 h-4 text-emerald-500" /> : <ClipboardPaste className="w-4 h-4" />}
+              {wtCopied ? '복사됨' : '텍스트 복사'}
+            </Btn>
+            <Btn onClick={openSpellChecker} disabled={!wtText.trim()}>
+              <ExternalLink className="w-4 h-4" />맞춤법 검사 (Daum)
+            </Btn>
+          </div>
+          <p className="text-xs text-gray-400">맞춤법 검사 버튼을 누르면 Daum 맞춤법 검사기 새 탭에서 결과를 확인할 수 있습니다.</p>
+        </div>
       </Modal>
     </div>
   );

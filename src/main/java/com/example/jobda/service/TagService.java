@@ -1,9 +1,11 @@
 package com.example.jobda.service;
 
 import com.example.jobda.domain.entity.Tag;
+import com.example.jobda.domain.entity.User;
 import com.example.jobda.dto.request.TagRequest;
 import com.example.jobda.dto.response.TagResponse;
 import com.example.jobda.repository.TagRepository;
+import com.example.jobda.util.AuthUtil;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -17,24 +19,29 @@ import java.util.List;
 public class TagService {
 
     private final TagRepository tagRepository;
+    private final AuthUtil authUtil;
 
     public List<TagResponse> findAll() {
-        return tagRepository.findAll().stream().map(TagResponse::from).toList();
+        User user = authUtil.getCurrentUser();
+        return tagRepository.findByUser(user).stream().map(TagResponse::from).toList();
     }
 
     public List<TagResponse> search(String keyword) {
-        return tagRepository.findByNameContainingIgnoreCase(keyword).stream()
+        User user = authUtil.getCurrentUser();
+        return tagRepository.findByUserAndNameContainingIgnoreCase(user, keyword).stream()
                 .map(TagResponse::from).toList();
     }
 
     @Transactional
     public TagResponse create(TagRequest request) {
-        if (tagRepository.existsByName(request.name())) {
+        User user = authUtil.getCurrentUser();
+        if (tagRepository.existsByUserAndName(user, request.name())) {
             throw new IllegalArgumentException("이미 존재하는 태그명입니다: " + request.name());
         }
         Tag tag = Tag.builder()
                 .name(request.name())
                 .color(request.color())
+                .user(user)
                 .build();
         return TagResponse.from(tagRepository.save(tag));
     }

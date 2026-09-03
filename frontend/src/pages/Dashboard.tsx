@@ -12,13 +12,15 @@ function StatCard({ label, value, icon: Icon, cls, to }: {
   const navigate = useNavigate();
   return (
     <button onClick={() => navigate(to)}
-      className="bg-white rounded-xl shadow-sm p-5 flex items-center gap-4 hover:shadow-md hover:-translate-y-0.5 transition-all text-left w-full">
-      <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${cls}`}><Icon className="w-6 h-6" /></div>
-      <div className="flex-1">
-        <p className="text-sm text-gray-500">{label}</p>
-        <p className="text-2xl font-bold text-gray-900">{value}</p>
+      className="bg-white rounded-xl shadow-sm p-3 sm:p-5 flex items-center gap-3 sm:gap-4 hover:shadow-md hover:-translate-y-0.5 transition-all text-left w-full">
+      <div className={`w-9 h-9 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center shrink-0 ${cls}`}>
+        <Icon className="w-4 h-4 sm:w-6 sm:h-6" />
       </div>
-      <ArrowRight className="w-4 h-4 text-gray-300" />
+      <div className="flex-1 min-w-0">
+        <p className="text-xs sm:text-sm text-gray-500 truncate">{label}</p>
+        <p className="text-xl sm:text-2xl font-bold text-gray-900">{value}</p>
+      </div>
+      <ArrowRight className="w-4 h-4 text-gray-300 shrink-0" />
     </button>
   );
 }
@@ -39,18 +41,18 @@ export default function Dashboard() {
   if (!data) return null;
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-gray-900">대시보드</h1>
+    <div className="space-y-4 sm:space-y-6">
+      <h1 className="text-xl sm:text-2xl font-bold text-gray-900">대시보드</h1>
 
-      {/* Stat cards — each navigates to the relevant page */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* Stat cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <StatCard label="총 지원 수" value={data.totalPostings} icon={Briefcase} cls="bg-blue-50 text-blue-600" to="/job-postings" />
         <StatCard label="진행 중" value={data.activePostings} icon={TrendingUp} cls="bg-orange-50 text-orange-600" to="/job-postings" />
         <StatCard label="면접 수" value={data.interviewCount} icon={Users} cls="bg-violet-50 text-violet-600" to="/job-postings" />
         <StatCard label="서류 합격률" value={`${data.documentPassRate}%`} icon={BarChart2} cls="bg-emerald-50 text-emerald-600" to="/job-postings" />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
         {/* Upcoming schedules */}
         <div className="bg-white rounded-xl shadow-sm p-5">
           <div className="flex items-center justify-between mb-4">

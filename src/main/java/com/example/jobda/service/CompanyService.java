@@ -2,9 +2,11 @@ package com.example.jobda.service;
 
 import com.example.jobda.domain.entity.Company;
 import com.example.jobda.domain.entity.Tag;
+import com.example.jobda.domain.entity.User;
 import com.example.jobda.dto.request.CompanyRequest;
 import com.example.jobda.dto.response.CompanyResponse;
 import com.example.jobda.repository.CompanyRepository;
+import com.example.jobda.util.AuthUtil;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -19,9 +21,11 @@ public class CompanyService {
 
     private final CompanyRepository companyRepository;
     private final TagService tagService;
+    private final AuthUtil authUtil;
 
     public List<CompanyResponse> findAll() {
-        return companyRepository.findAll().stream().map(CompanyResponse::from).toList();
+        User user = authUtil.getCurrentUser();
+        return companyRepository.findByUser(user).stream().map(CompanyResponse::from).toList();
     }
 
     public CompanyResponse findById(Long id) {
@@ -29,11 +33,13 @@ public class CompanyService {
     }
 
     public List<CompanyResponse> search(String keyword) {
-        return companyRepository.findByKeyword(keyword).stream().map(CompanyResponse::from).toList();
+        User user = authUtil.getCurrentUser();
+        return companyRepository.findByUserAndKeyword(user, keyword).stream().map(CompanyResponse::from).toList();
     }
 
     @Transactional
     public CompanyResponse create(CompanyRequest request) {
+        User user = authUtil.getCurrentUser();
         Company company = Company.builder()
                 .name(request.name())
                 .industry(request.industry())
@@ -42,6 +48,7 @@ public class CompanyService {
                 .size(request.size())
                 .welfare(request.welfare())
                 .memo(request.memo())
+                .user(user)
                 .build();
         return CompanyResponse.from(companyRepository.save(company));
     }

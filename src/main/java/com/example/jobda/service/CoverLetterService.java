@@ -4,11 +4,13 @@ import com.example.jobda.domain.entity.Company;
 import com.example.jobda.domain.entity.CoverLetter;
 import com.example.jobda.domain.entity.CoverLetterItem;
 import com.example.jobda.domain.entity.Tag;
+import com.example.jobda.domain.entity.User;
 import com.example.jobda.dto.request.CoverLetterItemRequest;
 import com.example.jobda.dto.request.CoverLetterRequest;
 import com.example.jobda.dto.response.CoverLetterResponse;
 import com.example.jobda.repository.CompanyRepository;
 import com.example.jobda.repository.CoverLetterRepository;
+import com.example.jobda.util.AuthUtil;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -24,9 +26,11 @@ public class CoverLetterService {
     private final CoverLetterRepository coverLetterRepository;
     private final CompanyRepository companyRepository;
     private final TagService tagService;
+    private final AuthUtil authUtil;
 
     public List<CoverLetterResponse> findAll() {
-        return coverLetterRepository.findAll().stream().map(CoverLetterResponse::from).toList();
+        User user = authUtil.getCurrentUser();
+        return coverLetterRepository.findByUser(user).stream().map(CoverLetterResponse::from).toList();
     }
 
     public CoverLetterResponse findById(Long id) {
@@ -34,12 +38,14 @@ public class CoverLetterService {
     }
 
     public List<CoverLetterResponse> findByCompany(Long companyId) {
-        return coverLetterRepository.findByCompanyId(companyId).stream()
+        User user = authUtil.getCurrentUser();
+        return coverLetterRepository.findByUserAndCompanyId(user, companyId).stream()
                 .map(CoverLetterResponse::from).toList();
     }
 
     @Transactional
     public CoverLetterResponse create(CoverLetterRequest request) {
+        User user = authUtil.getCurrentUser();
         Company company = resolveCompany(request.companyId());
 
         CoverLetter coverLetter = CoverLetter.builder()
@@ -47,6 +53,7 @@ public class CoverLetterService {
                 .company(company)
                 .targetPosition(request.targetPosition())
                 .version(request.version() != null ? request.version() : 1)
+                .user(user)
                 .build();
 
         if (request.items() != null) {
@@ -99,6 +106,7 @@ public class CoverLetterService {
                 .company(original.getCompany())
                 .targetPosition(original.getTargetPosition())
                 .version(original.getVersion() + 1)
+                .user(original.getUser())
                 .build();
 
         original.getItems().forEach(item -> copy.getItems().add(

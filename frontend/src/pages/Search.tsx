@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Search as SearchIcon, Building2, Briefcase, FileText, ClipboardList } from 'lucide-react';
 import { searchApi } from '../api';
@@ -61,9 +62,18 @@ function ResumeCard({ r }: { r: ResumeResponse }) {
 }
 
 export default function Search() {
-  const [input, setInput] = useState('');
-  const [keyword, setKeyword] = useState('');
+  const [searchParams] = useSearchParams();
+  const initialQ = searchParams.get('q') ?? '';
+  const [input, setInput] = useState(initialQ);
+  const [keyword, setKeyword] = useState(initialQ);
   const [tab, setTab] = useState<Tab>('all');
+
+  useEffect(() => {
+    const q = searchParams.get('q') ?? '';
+    setInput(q);
+    setKeyword(q);
+    setTab('all');
+  }, [searchParams]);
 
   const { data, isLoading, isFetching } = useQuery({
     queryKey: ['search', keyword],

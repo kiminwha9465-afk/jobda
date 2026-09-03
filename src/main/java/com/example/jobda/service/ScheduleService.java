@@ -2,11 +2,13 @@ package com.example.jobda.service;
 
 import com.example.jobda.domain.entity.JobPosting;
 import com.example.jobda.domain.entity.Schedule;
+import com.example.jobda.domain.entity.User;
 import com.example.jobda.domain.enums.ScheduleType;
 import com.example.jobda.dto.request.ScheduleRequest;
 import com.example.jobda.dto.response.ScheduleResponse;
 import com.example.jobda.repository.JobPostingRepository;
 import com.example.jobda.repository.ScheduleRepository;
+import com.example.jobda.util.AuthUtil;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -22,9 +24,11 @@ public class ScheduleService {
 
     private final ScheduleRepository scheduleRepository;
     private final JobPostingRepository jobPostingRepository;
+    private final AuthUtil authUtil;
 
     public List<ScheduleResponse> findAll() {
-        return scheduleRepository.findAll().stream()
+        User user = authUtil.getCurrentUser();
+        return scheduleRepository.findByUser(user).stream()
                 .map(ScheduleResponse::from)
                 .toList();
     }
@@ -34,31 +38,36 @@ public class ScheduleService {
     }
 
     public List<ScheduleResponse> findUpcoming() {
-        return scheduleRepository.findUpcoming(LocalDateTime.now()).stream()
+        User user = authUtil.getCurrentUser();
+        return scheduleRepository.findUpcomingByUser(user, LocalDateTime.now()).stream()
                 .map(ScheduleResponse::from)
                 .toList();
     }
 
     public List<ScheduleResponse> findByType(ScheduleType type) {
-        return scheduleRepository.findByType(type).stream()
+        User user = authUtil.getCurrentUser();
+        return scheduleRepository.findByUserAndType(user, type).stream()
                 .map(ScheduleResponse::from)
                 .toList();
     }
 
     public List<ScheduleResponse> findByJobPosting(Long jobPostingId) {
-        return scheduleRepository.findByJobPostingId(jobPostingId).stream()
+        User user = authUtil.getCurrentUser();
+        return scheduleRepository.findByUserAndJobPostingId(user, jobPostingId).stream()
                 .map(ScheduleResponse::from)
                 .toList();
     }
 
     public List<ScheduleResponse> findByPeriod(LocalDateTime start, LocalDateTime end) {
-        return scheduleRepository.findByScheduledAtBetween(start, end).stream()
+        User user = authUtil.getCurrentUser();
+        return scheduleRepository.findByUserAndPeriod(user, start, end).stream()
                 .map(ScheduleResponse::from)
                 .toList();
     }
 
     @Transactional
     public ScheduleResponse create(ScheduleRequest request) {
+        User user = authUtil.getCurrentUser();
         JobPosting jobPosting = request.jobPostingId() != null
                 ? jobPostingRepository.findById(request.jobPostingId())
                         .orElseThrow(() -> new EntityNotFoundException("공고를 찾을 수 없습니다"))
@@ -71,6 +80,7 @@ public class ScheduleService {
                 .location(request.location())
                 .memo(request.memo())
                 .jobPosting(jobPosting)
+                .user(user)
                 .build();
 
         return ScheduleResponse.from(scheduleRepository.save(schedule));

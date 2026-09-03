@@ -41,6 +41,10 @@ public class Schedule {
     @JoinColumn(name = "job_posting_id")
     private JobPosting jobPosting;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    private User user;
+
     @Column(updatable = false)
     private LocalDateTime createdAt;
 
